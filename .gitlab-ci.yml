@@ -1,0 +1,30 @@
+image: docker:stable
+services:
+- docker:dind
+
+
+variables:
+DOCKER_DRIVER: overlay2
+IMAGE: myapp:latest
+
+
+stages:
+- build
+- deploy
+
+
+build:
+stage: build
+script:
+- docker build -t $IMAGE ./app
+artifacts:
+paths:
+- app
+
+
+deploy:
+stage: deploy
+image: bitnami/kubectl:latest
+script:
+- kubectl apply -f k8s/
+when: manual
