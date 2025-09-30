@@ -1,8 +1,8 @@
-FROM ubuntu:23.04
+FROM ubuntu:22.04
 
 
 # Устанавливаем базовые утилиты без лишнего
-RUN apt-get update --fix-missing && \
+RUN apt-get update && \
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 python3 python3-pip curl git unzip wget ca-certificates gnupg lsb-release sudo && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -23,6 +23,6 @@ unzip terraform_1.6.3_linux_amd64.zip -d /usr/local/bin && rm terraform_1.6.3_li
 
 
 # Ansible
-RUN apt-get update --fix-missing && \
+RUN apt-get update && \
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ansible && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
