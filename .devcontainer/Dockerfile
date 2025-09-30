@@ -1,9 +1,15 @@
 FROM ubuntu:23.04
 
 
-# Базовые утилиты
-RUN apt update && apt install -y python3 python3-pip curl git docker.io unzip wget \
-&& apt clean && rm -rf /var/lib/apt/lists/*
+# Устанавливаем базовые утилиты без лишнего
+RUN apt-get update --fix-missing && \
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+python3 python3-pip curl git unzip wget ca-certificates gnupg lsb-release sudo && \
+apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+# Docker CLI (демон берется с хоста)
+RUN curl -fsSL https://get.docker.com | sh
 
 
 # kubectl
@@ -17,4 +23,6 @@ unzip terraform_1.6.3_linux_amd64.zip -d /usr/local/bin && rm terraform_1.6.3_li
 
 
 # Ansible
-RUN apt update && apt install -y ansible && apt clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update --fix-missing && \
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ansible && \
+apt-get clean && rm -rf /var/lib/apt/lists/*
