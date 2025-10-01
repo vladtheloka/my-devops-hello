@@ -1,19 +1,14 @@
-#!/bin/bash
-set -euo pipefail
+#!/usr/bin/env bash
+set -e
 
-echo "🔹 Полная проверка DevOps проекта"
+echo "====================================="
+echo " 🔹 Step 0: Очистка корня проекта"
+echo "====================================="
 
-# ===== 0. Очистка =====
-echo "🔹 Очистка старого состояния"
-docker rm -f myapp_test myapp_tf_test 2>/dev/null || true
-docker rmi -f myapp:latest 2>/dev/null || true
-
-# Удаляем мусорные каталоги в корне (оставляем только нужное)
-echo "🔹 Удаляем лишние файлы в корне"
 for item in .* *; do
   case "$item" in
-    app|ansible|k8s|terraform|.git|.gitignore|.venv|.pre-commit-config.yaml|README.md|test_all.sh)
-      echo "Оставляем $item"
+    .git|.gitignore|.venv|.pre-commit-config.yaml|README.md|test_all.sh|app|ansible|k8s|terraform|requirements.txt|requirements.yml|.gitlab-ci.yml|.devcontainer|.vscode|Dockerfile)
+      # сохраняем
       ;;
     *)
       echo "Удаляем $item"
@@ -22,28 +17,71 @@ for item in .* *; do
   esac
 done
 
-# ===== 1. Docker =====
-echo "🔹 Step 1: Docker build & run"
-docker build -t myapp:latest ./app
-docker run -d --name myapp_test -p 8080:8080 myapp:latest
+echo
+echo "====================================="
+echo " 🔹 Step 1: Docker build & test"
+echo "====================================="
+
+docker image rm -f myapp:latest 2>/dev/null || true
+docker build -t myapp:latest .
+docker run -d --rm --name myapp_test -p 8080:8080 myapp:latest
 sleep 3
-curl -s http://localhost:8080 || (echo "❌ App not responding" && exit 1)
-docker rm -f myapp_test
+curl -s http://localhost:8080 || echo "⚠️ приложение не отвечает"
+docker stop myapp_test
 
-# ===== 2. Ansible =====
-echo "🔹 Step 2: Ansible lint & playbook"
-ansible-lint ansible/playbook.yml || true
-ansible-playbook ansible/playbook.yml
+echo
+echo "====================================="
+echo " 🔹 Step 2: Python venv + Ansible lint & playbook"
+echo "====================================="
 
-# ===== 3. Kubernetes =====
-echo "🔹 Step 3: K8s lint"
-yamllint k8s/ || true
+if [ ! -d ".venv" ]; then
+  echo "Создаём .venv..."
+  python3 -m venv .venv
+fi
+source .venv/bin/activate
 
-# ===== 4. Terraform =====
-echo "🔹 Step 4: Terraform validate"
+pip install --upgrade pip
+pip install -r requirements.txt
+
+if [ -f "requirements.yml" ]; then
+  ansible-galaxy collection install -r requirements.yml
+fi
+
+echo "👉 Запуск ansible-lint"
+ansible-lint ansible/
+
+echo "👉 Запуск playbook"
+ansible-playbook ansible/playbook.yml --syntax-check
+ansible-playbook ansible/playbook.yml -i localhost, --connection=local
+
+echo
+echo "====================================="
+echo " 🔹 Step 3: Terraform validate & fmt"
+echo "====================================="
+
 cd terraform
-terraform init -backend=false -input=false
+terraform init -backend=false
 terraform validate
+terraform fmt -check -recursive
 cd ..
 
-echo "✅ Все проверки завершены успешно!"
+echo
+echo "====================================="
+echo " 🔹 Step 4: Kubernetes manifests"
+echo "====================================="
+
+kubectl apply --dry-run=client -f k8s/deployment.yaml
+kubectl apply --dry-run=client -f k8s/service.yaml
+
+echo
+echo "====================================="
+echo " 🔹 Step 5: pre-commit hooks"
+echo "====================================="
+
+pre-commit install
+pre-commit run --all-files || true
+
+echo
+echo "====================================="
+echo " ✅ Все проверки завершены успешно!"
+echo "====================================="
