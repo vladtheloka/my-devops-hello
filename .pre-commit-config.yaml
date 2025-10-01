@@ -1,0 +1,32 @@
+---
+repos:
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.0
+    hooks:
+      - id: yamllint
+        args: [--strict]
+
+  # Terraform
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.77.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+
+  # Ansible linting (через виртуальное окружение)
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.9.2
+    hooks:
+      - id: ansible-lint
+        additional_dependencies: [ansible-core>=2.14.0]
+        entry: bash -c "source ~/.ansible-venv/bin/activate && ansible-lint"
+
+  # Docker build check
+  - repo: local
+    hooks:
+      - id: docker_build
+        name: Docker build check
+        entry: docker build -t myapp:latest ./app
+        language: system
+        types: [dockerfile]

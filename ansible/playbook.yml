@@ -1,0 +1,34 @@
+- name: Build and verify Docker image locally
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Build Docker image (local)
+      community.docker.docker_image:
+        name: myapp
+        tag: latest
+        build:
+          path: ./app
+        source: build
+        state: present
+
+    - name: Run container for test
+      community.docker.docker_container:
+        name: myapp_test
+        image: myapp:latest
+        state: started
+        ports:
+          - "8080:8080"
+
+    - name: Wait for app to respond
+      uri:
+        url: http://localhost:8080
+        status_code: 200
+      retries: 5
+      delay: 3
+      register: result
+      until: result is succeeded
+
+    - name: Stop and remove test container
+      community.docker.docker_container:
+        name: myapp_test
+        state: absent
