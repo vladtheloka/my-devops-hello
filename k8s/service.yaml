@@ -1,49 +1,13 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
-name: myapp-service
+  name: myapp-service
 spec:
-selector:
-app: myapp
-ports:
-- protocol: TCP
-port: 80
-targetPort: 8080
-type: ClusterIP
-
-
---- ansible/playbook.yml ---
-- name: Build and verify Docker image locally
-hosts: localhost
-connection: local
-gather_facts: false
-tasks:
-- name: Build Docker image (local)
-community.docker.docker_image:
-build: ../app
-name: myapp
-tag: latest
-
-
-- name: Run container for smoke test
-community.docker.docker_container:
-name: myapp_test
-image: myapp:latest
-state: started
-ports:
-- "8080:8080"
-register: container_run
-
-
-- name: Wait for container HTTP response
-uri:
-url: http://localhost:8080/
-status_code: 200
-retries: 5
-delay: 2
-
-
-- name: Stop and remove test container
-community.docker.docker_container:
-name: myapp_test
-state: absent
+  selector:
+    app: myapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

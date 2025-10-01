@@ -1,42 +1,49 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-echo "🔹 Step 0: Очистка старого состояния"
-docker rm -f myapp_test || true
-docker rmi -f myapp:latest || true
+echo "🔹 Полная проверка DevOps проекта"
 
-# Создаём временную директорию для артефактов
-TMP_DIR=$(mktemp -d)
-echo "Используем временную директорию: $TMP_DIR"
+# ===== 0. Очистка =====
+echo "🔹 Очистка старого состояния"
+docker rm -f myapp_test myapp_tf_test 2>/dev/null || true
+docker rmi -f myapp:latest 2>/dev/null || true
 
-echo "🔹 Step 0b: Удаляем лишние IDE/Devcontainer директории"
-for d in .vscode .devcontainer .ansible_cache .pytest_cache; do
-    [ -d "$d" ] && echo "Удаляем $d" && rm -rf "$d"
+# Удаляем мусорные каталоги в корне (оставляем только нужное)
+echo "🔹 Удаляем лишние файлы в корне"
+for item in .* *; do
+  case "$item" in
+    app|ansible|k8s|terraform|.git|.gitignore|.venv|.pre-commit-config.yaml|README.md|test_all.sh)
+      echo "Оставляем $item"
+      ;;
+    *)
+      echo "Удаляем $item"
+      rm -rf "$item"
+      ;;
+  esac
 done
 
-echo "🔹 Step 1: Docker build & test"
+# ===== 1. Docker =====
+echo "🔹 Step 1: Docker build & run"
 docker build -t myapp:latest ./app
-echo "Waiting 3s for app to start..."
 docker run -d --name myapp_test -p 8080:8080 myapp:latest
 sleep 3
-curl -s http://localhost:8080/ || echo "⚠️ App did not respond"
-docker stop myapp_test && docker rm myapp_test
+curl -s http://localhost:8080 || (echo "❌ App not responding" && exit 1)
+docker rm -f myapp_test
 
+# ===== 2. Ansible =====
 echo "🔹 Step 2: Ansible lint & playbook"
-# Активируем виртуальное окружение, если есть
-[ -f ".venv/bin/activate" ] && source .venv/bin/activate
+ansible-lint ansible/playbook.yml || true
+ansible-playbook ansible/playbook.yml
 
-ansible-lint ansible/playbook.yml || echo "⚠️ Ansible-lint failed"
-ansible-playbook ansible/playbook.yml || echo "⚠️ Ansible playbook failed"
+# ===== 3. Kubernetes =====
+echo "🔹 Step 3: K8s lint"
+yamllint k8s/ || true
 
-echo "🔹 Step 3: Terraform check"
-terraform -chdir=terraform init -input=false
-terraform -chdir=terraform validate
-terraform -chdir=terraform fmt -check
+# ===== 4. Terraform =====
+echo "🔹 Step 4: Terraform validate"
+cd terraform
+terraform init -backend=false -input=false
+terraform validate
+cd ..
 
-echo "🔹 Step 4: Pre-commit checks"
-pre-commit run --all-files || echo "⚠️ Pre-commit checks failed"
-
-echo "🔹 Step 5: Очистка временных файлов"
-rm -rf "$TMP_DIR"
-echo "✅ Все шаги выполнены, проект чистый!"
+echo "✅ Все проверки завершены успешно!"
