@@ -9,3 +9,6 @@ venv/
 .vscode/
 .DS_Store
 *.swp
+jenkins_home/
+sonarqube_data/
+sonarqube_extensions/
