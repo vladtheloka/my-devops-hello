@@ -2,39 +2,40 @@ pipeline {
     agent any
 
     environment {
-        // имя сервера SonarQube, как указано в Manage Jenkins → System
-        SONARQUBE_ENV = credentials('sonar-token')
+        SONAR_PROJECT_KEY = 'my-devops-hello'
+        SONAR_HOST_URL = 'http://sonarqube:9000'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/<твой-репо>.git'
             }
         }
 
         stage('Build') {
             steps {
                 echo 'Building project...'
-                // пример: docker build или просто echo
-                sh 'echo "Build complete"'
+                sh 'echo "Build stage placeholder"'
             }
         }
 
         stage('SonarQube Analysis') {
-            environment {
-                // имя сервера SonarQube (как в Jenkins → System)
-                SONARQUBE_SERVER = 'SonarQube'
-            }
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                        sonar-scanner \
-                          -Dsonar.projectKey=my-devops-hello \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=http://sonarqube:9000 \
-                          -Dsonar.login=$SONARQUBE_ENV
-                    '''
+                script {
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                        echo "Running SonarQube scan inside container..."
+                        docker run --rm \
+                          -e SONAR_HOST_URL=$SONAR_HOST_URL \
+                          -e SONAR_LOGIN=$SONAR_AUTH_TOKEN \
+                          -v $PWD:/usr/src \
+                          sonarsource/sonar-scanner-cli:latest \
+                          -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                          -Dsonar.sources=/usr/src
+                        '''
+                        '''
+                    }
                 }
             }
         }
@@ -44,12 +45,6 @@ pipeline {
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Deploy stage...'
             }
         }
     }
