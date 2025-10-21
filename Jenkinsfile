@@ -11,12 +11,7 @@ pipeline {
             steps {
                 git branch: 'main', 
                 url: 'https://github.com/vladtheloka/my-devops-hello.git'
-
-                sh '''
-                echo "Current directory: $(pwd)"
-                git rev-parse --is-inside-work-tree
-                ls -la
-                '''
+                git pull origin main
             }
         }
 
