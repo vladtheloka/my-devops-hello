@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // имя сервера SonarQube, как указано в Manage Jenkins → System
-        SONARQUBE_ENV = credentials('sonar-token')
+        SONARQUBE_ENV = credentials('jenkins-token')
     }
 
     stages {
