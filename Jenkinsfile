@@ -34,7 +34,6 @@ pipeline {
                           -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                           -Dsonar.sources=/usr/src
                         '''
-                        '''
                     }
                 }
             }
