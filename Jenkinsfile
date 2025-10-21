@@ -10,8 +10,20 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', 
-                url: 'https://github.com/vladtheloka/my-devops-hello.git'
-                git pull origin main
+                sh '''
+                # Если репозиторий уже есть, делаем pull, иначе клонируем
+                if [ -d ".git" ]; then
+                    echo "Git repository exists, pulling latest changes..."
+                    git pull origin main
+                else
+                    echo "Git repository not found, cloning..."
+                    git clone https://github.com/vladtheloka/my-devops-hello.git .
+                fi
+
+                # Проверяем, что находимся в git репозитории
+                git rev-parse --is-inside-work-tree
+                ls -la
+                '''
             }
         }
 
