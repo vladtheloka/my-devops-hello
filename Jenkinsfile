@@ -9,8 +9,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/vladtheloka/my-devops-hello.git',
-                credentialsId: 'github-creds'
+                git branch: 'main', 
+                url: 'https://github.com/vladtheloka/my-devops-hello.git'
+
+                sh '''
+                echo "Current directory: $(pwd)"
+                git rev-parse --is-inside-work-tree
+                ls -la
+                '''
             }
         }
 
