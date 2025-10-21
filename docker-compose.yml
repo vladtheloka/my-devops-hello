@@ -16,7 +16,7 @@ services:
     restart: always
 
   sonarqube:
-    image: sonarqube:2025.1
+    image: sonarqube:latest
     container_name: sonarqube
     ports:
       - "9000:9000"
