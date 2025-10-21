@@ -10,5 +10,5 @@ venv/
 .DS_Store
 *.swp
 jenkins_home/
-sonarqube_data/
-sonarqube_extensions/
+sonarqube_home/
+.devcontainer
