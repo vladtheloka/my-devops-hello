@@ -9,17 +9,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: 'main']],
-                    userRemoteConfigs: [[url: 'https://github.com/vladtheloka/my-devops-hello.git']]
-                ])
-                
-                // Проверка
-                sh '''
-                echo "Current directory: $(pwd)"
-                git rev-parse --is-inside-work-tree
-                ls -la
-                '''
+                checkout scm
+                    branches: 'main',
+                    url: 'https://github.com/vladtheloka/my-devops-hello.git'
             }
         }
 
