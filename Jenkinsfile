@@ -9,18 +9,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', 
+                checkout([$class: 'GitSCM',
+                    branches: [[name: 'main']],
+                    userRemoteConfigs: [[url: 'https://github.com/vladtheloka/my-devops-hello.git']]
+                ])
+                
+                // Проверка
                 sh '''
-                # Если репозиторий уже есть, делаем pull, иначе клонируем
-                if [ -d ".git" ]; then
-                    echo "Git repository exists, pulling latest changes..."
-                    git pull origin main
-                else
-                    echo "Git repository not found, cloning..."
-                    git clone https://github.com/vladtheloka/my-devops-hello.git .
-                fi
-
-                # Проверяем, что находимся в git репозитории
+                echo "Current directory: $(pwd)"
                 git rev-parse --is-inside-work-tree
                 ls -la
                 '''
