@@ -9,6 +9,20 @@ pipeline {
 
     stages {
         
+        stage('Debug') {
+            steps {
+                sh '''
+                  echo "PWD:"
+                  pwd
+                  echo "WORKSPACE:"
+                  echo $WORKSPACE
+                  echo "Contents:"
+                  ls -la
+                  echo "Check git:"
+                  git rev-parse --is-inside-work-tree || echo "NOT IN GIT DIR"
+                '''
+            }
+        }
 
         stage('Build') {
             steps {
