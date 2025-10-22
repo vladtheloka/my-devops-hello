@@ -10,8 +10,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/vladtheloka/my-devops-hello.git'
+                checkout([$class: 'GitSCM',
+                          branches: [[name: '*/main']],
+                          userRemoteConfigs: [[url: 'https://github.com/vladtheloka/my-devops-hello.git']]
+                ])
+                sh 'pwd && ls -la && git rev-parse --is-inside-work-tree || echo NOT IN GIT DIR'
             }
         }
 
