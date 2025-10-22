@@ -9,7 +9,6 @@ services:
       - "50000:50000"
     volumes:
       - ./jenkins_home:/var/jenkins_home
-      - ./my-devops-hello:/var/jenkins_home/jenkins_data/workspace/test
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
     networks:
