@@ -4,6 +4,7 @@ pipeline {
     environment {
         SONAR_PROJECT_KEY = 'my-devops-hello'
         SONAR_HOST_URL = 'http://sonarqube:9000'
+        GIT_WORK_TREE = "${WORKSPACE}"
     }
 
     stages {
